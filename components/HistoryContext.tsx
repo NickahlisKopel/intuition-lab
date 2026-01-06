@@ -21,7 +21,8 @@ export function HistoryProvider({ children }: { children: React.ReactNode }) {
   const [results, setResults] = useState<GameResult[]>([]);
 
   const recordResult = useCallback((payload: Omit<GameResult, 'id' | 'timestamp'>) => {
-    const id = typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : `run-${Date.now()}-${Math.random()}`;
+    const maybeRandomUUID = (globalThis as any).crypto?.randomUUID;
+    const id = typeof maybeRandomUUID === 'function' ? maybeRandomUUID() : `run-${Date.now()}-${Math.random()}`;
     setResults((prev) => [
       {
         ...payload,

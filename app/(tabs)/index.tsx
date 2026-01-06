@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Pressable, View as RNView } from 'react-native';
+import { Pressable, View as RNView, ScrollView, StyleSheet } from 'react-native';
 
-import { Text, View } from '@/components/Themed';
+import GamePanel from '@/components/GamePanels';
 import { useHistory } from '@/components/HistoryContext';
+import { Text, View } from '@/components/Themed';
 
 function Pill({ label }: { label: string }) {
   return (
@@ -132,6 +133,7 @@ export default function PlayScreen() {
                     Drop timers, canvas assets, or gesture handlers into this expanded container. Data points from
                     simulated runs land in the History tab so you can watch averages update.
                   </Text>
+                  <GamePanel module={shelf.module} onResult={recordResult} />
                 </View>
               )}
             </View>
