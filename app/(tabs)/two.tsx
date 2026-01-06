@@ -48,6 +48,7 @@ export default function ModulesScreen() {
         <Text style={styles.body}>• Randomized outcomes for fairness in guessing modules.</Text>
         <Text style={styles.body}>• Millisecond timers for reaction and decision events.</Text>
         <Text style={styles.body}>• Short sessions with optional summaries to reduce fatigue.</Text>
+        <Text style={styles.body}>• Transitional shelves that hold controls and copy until full game flows are slotted in.</Text>
       </View>
 
       {modules.map((module) => (

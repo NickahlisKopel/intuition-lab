@@ -1,9 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Pressable } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
-
-const numberOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
 function Pill({ label }: { label: string }) {
   return (
@@ -14,17 +12,7 @@ function Pill({ label }: { label: string }) {
 }
 
 export default function PlayScreen() {
-  const [numberTarget, setNumberTarget] = useState<number | null>(null);
-  const [numberStart, setNumberStart] = useState<number | null>(null);
-  const [numberResult, setNumberResult] = useState<string>('');
-
-  const [reactionStatus, setReactionStatus] = useState<'idle' | 'waiting' | 'go' | 'done'>(
-    'idle',
-  );
-  const [reactionMessage, setReactionMessage] = useState('Tap start to begin a quick reaction test.');
-  const [reactionStart, setReactionStart] = useState<number | null>(null);
-  const [reactionTime, setReactionTime] = useState<number | null>(null);
-  const reactionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [status, setStatus] = useState<string>('Choose a shelf to stage your next mini-experiment.');
 
   const guidelines = useMemo(
     () => [
@@ -36,72 +24,36 @@ export default function PlayScreen() {
     [],
   );
 
-  const startGuessRound = () => {
-    const target = Math.floor(Math.random() * 10) + 1;
-    setNumberTarget(target);
-    setNumberStart(Date.now());
-    setNumberResult('Pick the number you think was chosen.');
+  const shelves = useMemo(
+    () => [
+      {
+        title: 'Guessing shelf',
+        summary: 'Reserve the space for number/colour/shape intuition draws with randomness wired in.',
+        cta: 'Stage intuition',
+      },
+      {
+        title: 'Reaction shelf',
+        summary: 'Hold the tap-to-go reaction flow; swap in visuals later while keeping timer hooks ready.',
+        cta: 'Stage reaction',
+      },
+      {
+        title: 'Decision shelf',
+        summary: 'Slot the pump-or-bank risk task here with point counters and pop thresholds.',
+        cta: 'Stage risk',
+      },
+      {
+        title: 'Memory shelf',
+        summary: 'Keep room for N-back or sequence recall with short bursts and clear prompts.',
+        cta: 'Stage memory',
+      },
+    ],
+    [],
+  );
+
+  const handleShelfSelect = (title: string) => {
+    const time = new Date().toLocaleTimeString();
+    setStatus(`“${title}” scaffold queued at ${time}. Transition when assets and logic are ready.`);
   };
-
-  const submitGuess = (guess: number) => {
-    if (!numberTarget || !numberStart) {
-      setNumberResult('Tap “Start guessing” first to generate a number.');
-      return;
-    }
-
-    const reactionMs = Date.now() - numberStart;
-    const correct = guess === numberTarget;
-    const error = Math.abs(guess - numberTarget);
-    const feedback = correct
-      ? `Nice intuition! ${guess} was correct. Reaction: ${reactionMs} ms.`
-      : `Target was ${numberTarget}. You chose ${guess} (off by ${error}). Reaction: ${reactionMs} ms.`;
-
-    setNumberResult(feedback);
-    setNumberTarget(null);
-    setNumberStart(null);
-  };
-
-  const startReactionTest = () => {
-    setReactionStatus('waiting');
-    setReactionMessage('Wait for green, then tap quickly!');
-    setReactionTime(null);
-
-    const delay = Math.floor(Math.random() * 3000) + 1500;
-    reactionTimer.current && clearTimeout(reactionTimer.current);
-    reactionTimer.current = setTimeout(() => {
-      setReactionStatus('go');
-      setReactionMessage('Tap now!');
-      setReactionStart(Date.now());
-    }, delay);
-  };
-
-  const handleReactionTap = () => {
-    if (reactionStatus === 'waiting') {
-      setReactionStatus('idle');
-      setReactionMessage('Too early! Tap start and wait for the green prompt.');
-      reactionTimer.current && clearTimeout(reactionTimer.current);
-      return;
-    }
-
-    if (reactionStatus === 'go' && reactionStart) {
-      const time = Date.now() - reactionStart;
-      setReactionStatus('done');
-      setReactionTime(time);
-      setReactionMessage(`Response captured in ${time} ms.`);
-      reactionTimer.current && clearTimeout(reactionTimer.current);
-      return;
-    }
-
-    if (reactionStatus === 'done') {
-      setReactionMessage('Tap start for another round.');
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      reactionTimer.current && clearTimeout(reactionTimer.current);
-    };
-  }, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -109,7 +61,8 @@ export default function PlayScreen() {
         <Text style={styles.kicker}>Intuition Lab</Text>
         <Text style={styles.title}>Micro-games for intuition and cognition</Text>
         <Text style={styles.subtitle}>
-          Try a guessing round, test your reaction speed, and capture quick feedback in under a minute.
+          Stage each micro-game as a transitional shelf—ready for assets and timers but calm until you launch
+          them.
         </Text>
         <View style={styles.pillRow}>
           {guidelines.map((item) => (
@@ -119,71 +72,30 @@ export default function PlayScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionLabel}>Guess the number</Text>
+        <Text style={styles.sectionLabel}>Shelves & transitions</Text>
         <Text style={styles.cardCopy}>
-          The app picks a number between 1 and 10. Choose as fast as you can to capture intuition and reaction
-          time.
+          Keep the experience calm with transitional buttons that hold space for each micro-game. When
+          you’re ready, drop in assets, timers, and scoring without reshaping the layout.
         </Text>
-        <View style={styles.inlineRow}>
-          <Pressable style={styles.primaryButton} onPress={startGuessRound}>
-            <Text style={styles.primaryButtonText}>Start guessing</Text>
-          </Pressable>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Random & secure</Text>
-          </View>
-        </View>
-        <View style={styles.numberGrid}>
-          {numberOptions.map((number) => (
-            <Pressable key={number} style={styles.optionButton} onPress={() => submitGuess(number)}>
-              <Text style={styles.optionLabel}>{number}</Text>
-            </Pressable>
+        <View style={styles.shelfGrid}>
+          {shelves.map((shelf) => (
+            <View key={shelf.title} style={styles.shelf}>
+              <View style={styles.shelfHeader}>
+                <Text style={styles.shelfLabel}>{shelf.title}</Text>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>Scaffold</Text>
+                </View>
+              </View>
+              <Text style={styles.cardCopy}>{shelf.summary}</Text>
+              <Pressable style={styles.primaryButton} onPress={() => handleShelfSelect(shelf.title)}>
+                <Text style={styles.primaryButtonText}>{shelf.cta}</Text>
+              </Pressable>
+            </View>
           ))}
         </View>
-        <Text style={styles.feedback}>{numberResult || 'Tap start, then pick a number.'}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionLabel}>Reaction speed</Text>
-        <Text style={styles.cardCopy}>
-          Wait for the green signal, then tap immediately. Timing uses high-resolution timestamps to measure
-          your response window.
-        </Text>
-        <View style={styles.inlineRow}>
-          <Pressable style={styles.primaryButton} onPress={startReactionTest}>
-            <Text style={styles.primaryButtonText}>Start</Text>
-          </Pressable>
-          {reactionTime !== null && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>Last: {reactionTime} ms</Text>
-            </View>
-          )}
-        </View>
-        <Pressable
-          style={[styles.reactionPanel, reactionStatus === 'go' && styles.reactionPanelActive]}
-          onPress={handleReactionTap}>
-          <Text style={styles.reactionLabel}>{reactionMessage}</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionLabel}>Session summary</Text>
-        <Text style={styles.cardCopy}>
-          Alternate between intuition (guessing) and cognition (reaction). After each round, note accuracy,
-          difference from the target, and response time. Keep sessions short to avoid fatigue.
-        </Text>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryStat}>
-            <Text style={styles.statLabel}>Focus</Text>
-            <Text style={styles.statValue}>One task at a time</Text>
-          </View>
-          <View style={styles.summaryStat}>
-            <Text style={styles.statLabel}>Timing</Text>
-            <Text style={styles.statValue}>ms precision</Text>
-          </View>
-          <View style={styles.summaryStat}>
-            <Text style={styles.statLabel}>Feedback</Text>
-            <Text style={styles.statValue}>Instant</Text>
-          </View>
+        <View style={styles.statusBar}>
+          <Text style={styles.statusLabel}>Now staging</Text>
+          <Text style={styles.statusValue}>{status}</Text>
         </View>
       </View>
     </ScrollView>
@@ -257,6 +169,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   primaryButtonText: {
     color: '#0f172a',
@@ -277,66 +190,45 @@ const styles = StyleSheet.create({
     color: '#e2e8f0',
     fontWeight: '600',
   },
-  numberGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  optionButton: {
-    width: '18%',
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#111827',
-    borderColor: '#1f2937',
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  optionLabel: {
-    color: '#e2e8f0',
-    fontWeight: '700',
-  },
-  feedback: {
-    color: '#e2e8f0',
-    fontWeight: '600',
-  },
-  reactionPanel: {
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
-  reactionPanelActive: {
-    backgroundColor: '#047857',
-    borderColor: '#22c55e',
-  },
-  reactionLabel: {
-    color: '#e2e8f0',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  shelfGrid: {
     gap: 12,
   },
-  summaryStat: {
-    flex: 1,
-    backgroundColor: '#111827',
-    padding: 12,
+  shelf: {
+    backgroundColor: '#0f172a',
     borderRadius: 12,
+    padding: 16,
+    gap: 10,
     borderWidth: 1,
     borderColor: '#1f2937',
   },
-  statLabel: {
+  shelfHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  shelfLabel: {
+    color: '#e2e8f0',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  statusBar: {
+    marginTop: 8,
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    gap: 6,
+  },
+  statusLabel: {
     color: '#a5b4fc',
     fontWeight: '700',
-    marginBottom: 4,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    fontSize: 12,
   },
-  statValue: {
+  statusValue: {
     color: '#e2e8f0',
     fontWeight: '600',
   },
 });
-
